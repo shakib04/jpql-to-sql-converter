@@ -4,64 +4,382 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="google-site-verification" content="emr9eD0HPV2Svuem8oSjeRF319sTuF-WLPR4Lfdxopw" />
-    <title>JPQL ⇄ SQL Converter</title>
+    <title>JPQL to SQL Converter - Free Online JPQL SQL Bidirectional Converter Tool</title>
+    <meta name="description" content="Convert JPQL to SQL and SQL to JPQL instantly. Free online converter tool for Java Persistence Query Language and SQL with examples and syntax guide.">
+    <meta name="keywords" content="JPQL to SQL, SQL to JPQL, JPQL converter, SQL converter, JPA query converter, JPQL syntax, SQL syntax converter">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
     <style>
+        :root {
+            --primary-color: #2563eb;
+            --primary-hover: #1d4ed8;
+            --success-color: #16a34a;
+            --success-hover: #15803d;
+            --background: #f8fafc;
+            --card-bg: #ffffff;
+            --text-primary: #1e293b;
+            --text-secondary: #64748b;
+            --border-color: #e2e8f0;
+        }
+
+        body {
+            background-color: var(--background);
+            color: var(--text-primary);
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        }
+
+        .main-container {
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 2rem 1rem;
+        }
+
+        .converter-card {
+            background: var(--card-bg);
+            border-radius: 12px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+            padding: 2rem;
+            margin-bottom: 2rem;
+        }
+
         .mode-toggle {
             display: flex;
             justify-content: center;
             align-items: center;
-            gap: 10px;
-            margin-bottom: 20px;
+            gap: 1rem;
+            margin-bottom: 2rem;
+            padding: 1rem;
+            background: var(--background);
+            border-radius: 8px;
         }
+
+        .mode-label {
+            font-weight: 600;
+            font-size: 1.1rem;
+            color: var(--text-primary);
+        }
+
+        .toggle-btn {
+            background: var(--primary-color);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            padding: 0.5rem 1rem;
+            font-size: 1.2rem;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .toggle-btn:hover {
+            background: var(--primary-hover);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3);
+        }
+
         .arrow-icon {
-            font-size: 24px;
             transition: transform 0.3s ease;
         }
+
         .arrow-icon.reversed {
             transform: rotate(180deg);
         }
+
+        .form-label {
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 0.5rem;
+        }
+
+        .form-control {
+            border: 2px solid var(--border-color);
+            border-radius: 8px;
+            font-family: 'Monaco', 'Consolas', monospace;
+            font-size: 14px;
+            transition: border-color 0.3s ease;
+        }
+
+        .form-control:focus {
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+        }
+
+        .btn-primary {
+            background: var(--primary-color);
+            border: none;
+            border-radius: 8px;
+            padding: 0.75rem 1.5rem;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        .btn-primary:hover {
+            background: var(--primary-hover);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3);
+        }
+
+        .btn-success {
+            background: var(--success-color);
+            border: none;
+            border-radius: 8px;
+            padding: 0.75rem 1.5rem;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        .btn-success:hover {
+            background: var(--success-hover);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(22, 163, 74, 0.3);
+        }
+
+        .output-box {
+            background: var(--background);
+            border: 2px solid var(--border-color);
+            border-radius: 8px;
+            padding: 1rem;
+            min-height: 100px;
+            font-family: 'Monaco', 'Consolas', monospace;
+            font-size: 14px;
+            white-space: pre-wrap;
+            word-break: break-word;
+        }
+
+        .button-group {
+            display: flex;
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+
+        .button-group button {
+            flex: 1;
+        }
+
+        .example-section {
+            background: var(--card-bg);
+            border-radius: 12px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+            padding: 2rem;
+            margin-bottom: 2rem;
+        }
+
+        .example-card {
+            background: var(--background);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 1.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .example-title {
+            font-weight: 600;
+            color: var(--primary-color);
+            margin-bottom: 0.5rem;
+        }
+
+        .code-block {
+            background: #1e293b;
+            color: #e2e8f0;
+            padding: 1rem;
+            border-radius: 6px;
+            font-family: 'Monaco', 'Consolas', monospace;
+            font-size: 13px;
+            margin: 0.5rem 0;
+            overflow-x: auto;
+        }
+
+        .code-label {
+            color: #94a3b8;
+            font-size: 12px;
+            margin-bottom: 0.25rem;
+        }
+
+        .faq-section {
+            background: var(--card-bg);
+            border-radius: 12px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+            padding: 2rem;
+        }
+
+        .faq-item {
+            margin-bottom: 1.5rem;
+            padding-bottom: 1.5rem;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .faq-item:last-child {
+            border-bottom: none;
+            margin-bottom: 0;
+            padding-bottom: 0;
+        }
+
+        .faq-question {
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 0.5rem;
+        }
+
+        .faq-answer {
+            color: var(--text-secondary);
+            line-height: 1.6;
+        }
+
+        .github-section {
+            text-align: center;
+            margin: 2rem 0;
+        }
+
+        .alert-success {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 1000;
+            animation: slideIn 0.3s ease-out;
+        }
+
+        @keyframes slideIn {
+            from {
+                transform: translateX(100%);
+            }
+            to {
+                transform: translateX(0);
+            }
+        }
+
+        .hero-title {
+            text-align: center;
+            margin-bottom: 0.5rem;
+            color: var(--text-primary);
+        }
+
+        .hero-subtitle {
+            text-align: center;
+            color: var(--text-secondary);
+            margin-bottom: 2rem;
+        }
     </style>
 </head>
-<body class="container mt-4">
+<body>
+<div class="main-container">
+    <h1 class="hero-title">JPQL ⇄ SQL Converter</h1>
+    <p class="hero-subtitle">Convert between JPQL and SQL queries instantly with proper case conversion</p>
 
-<h2 class="text-center mb-3">JPQL ⇄ SQL Converter</h2>
+    <div class="converter-card">
+        <div class="mode-toggle">
+            <span id="fromLabel" class="mode-label">JPQL</span>
+            <button class="toggle-btn" onclick="toggleMode()">
+                <i class="bi bi-arrow-right arrow-icon" id="arrowIcon"></i>
+                <span>Switch</span>
+            </button>
+            <span id="toLabel" class="mode-label">SQL</span>
+        </div>
 
-<div class="mode-toggle">
-    <span id="fromLabel" class="h5 mb-0">JPQL</span>
-    <button class="btn btn-outline-primary btn-sm" onclick="toggleMode()">
-        <span class="arrow-icon" id="arrowIcon">→</span>
-    </button>
-    <span id="toLabel" class="h5 mb-0">SQL</span>
+        <div class="mb-4">
+            <label for="inputText" class="form-label" id="inputLabel">
+                <i class="bi bi-code-square"></i> Enter JPQL Query:
+            </label>
+            <textarea id="inputText" class="form-control" rows="6" placeholder="Enter your JPQL query here..."></textarea>
+        </div>
+
+        <div class="button-group mb-4">
+            <button class="btn btn-primary" onclick="convertText()">
+                <i class="bi bi-arrow-repeat"></i> Convert
+            </button>
+            <button class="btn btn-success" onclick="convertAndCopy()">
+                <i class="bi bi-clipboard-check"></i> Convert & Copy
+            </button>
+        </div>
+
+        <div class="mb-4">
+            <label class="form-label" id="outputLabel">
+                <i class="bi bi-file-code"></i> Converted SQL Query:
+            </label>
+            <div id="output" class="output-box"></div>
+        </div>
+
+        <button class="btn btn-success w-100" onclick="copyToClipboard()">
+            <i class="bi bi-clipboard"></i> Copy to Clipboard
+        </button>
+    </div>
+
+    <div class="example-section">
+        <h2 class="h4 mb-4"><i class="bi bi-lightbulb"></i> Examples</h2>
+
+        <div class="example-card">
+            <div class="example-title">Example 1: Simple Entity Query</div>
+            <div class="code-label">JPQL:</div>
+            <div class="code-block">SELECT u FROM UserEntity u WHERE u.isActive = true</div>
+            <div class="code-label">SQL:</div>
+            <div class="code-block">SELECT u FROM user_entity u WHERE u.is_active = true</div>
+        </div>
+
+        <div class="example-card">
+            <div class="example-title">Example 2: Join Query with Parameters</div>
+            <div class="code-label">JPQL:</div>
+            <div class="code-block">SELECT o FROM OrderEntity o JOIN o.customerInfo c WHERE c.customerId = :customerId</div>
+            <div class="code-label">SQL:</div>
+            <div class="code-block">SELECT o FROM order_entity o JOIN o.customer_info c WHERE c.customer_id = :customerId</div>
+        </div>
+
+        <div class="example-card">
+            <div class="example-title">Example 3: Complex Query with Multiple Conditions</div>
+            <div class="code-label">JPQL:</div>
+            <div class="code-block">SELECT p FROM ProductEntity p WHERE p.productPrice > :minPrice AND p.categoryType = :category ORDER BY p.createdDate DESC</div>
+            <div class="code-label">SQL:</div>
+            <div class="code-block">SELECT p FROM product_entity p WHERE p.product_price > :minPrice AND p.category_type = :category ORDER BY p.created_date DESC</div>
+        </div>
+    </div>
+
+    <div class="faq-section">
+        <h2 class="h4 mb-4"><i class="bi bi-question-circle"></i> Frequently Asked Questions</h2>
+
+        <div class="faq-item">
+            <div class="faq-question">What is JPQL?</div>
+            <div class="faq-answer">JPQL (Java Persistence Query Language) is a platform-independent object-oriented query language defined as part of the Java Persistence API (JPA). It's used to make queries against entities stored in a relational database.</div>
+        </div>
+
+        <div class="faq-item">
+            <div class="faq-question">How does this converter work?</div>
+            <div class="faq-answer">The converter transforms naming conventions between JPQL (camelCase) and SQL (snake_case). It preserves query structure, parameters, and keywords while only changing the case format of entity and field names.</div>
+        </div>
+
+        <div class="faq-item">
+            <div class="faq-question">Does it preserve named parameters?</div>
+            <div class="faq-answer">Yes! Named parameters like :userId or :customerId are preserved exactly as written during conversion. Only entity and field names are converted between camelCase and snake_case.</div>
+        </div>
+
+        <div class="faq-item">
+            <div class="faq-question">What's the difference between JPQL and SQL?</div>
+            <div class="faq-answer">JPQL operates on Java objects and their relationships, using Java naming conventions (camelCase), while SQL operates directly on database tables using database naming conventions (typically snake_case). JPQL is database-independent, while SQL syntax can vary between database systems.</div>
+        </div>
+
+        <div class="faq-item">
+            <div class="faq-question">Can I use this for complex queries?</div>
+            <div class="faq-answer">Yes! The converter handles complex queries including JOINs, subqueries, aggregate functions, and multiple WHERE conditions. It intelligently converts naming conventions while preserving SQL keywords and query structure.</div>
+        </div>
+
+        <div class="faq-item">
+            <div class="faq-question">Is this tool free to use?</div>
+            <div class="faq-answer">Yes, this JPQL to SQL converter is completely free to use. No registration, no limits, and no hidden fees. You can convert as many queries as you need.</div>
+        </div>
+    </div>
+
+    <div class="github-section">
+        <p class="text-secondary mb-3">Found this tool helpful? Give it a star on GitHub!</p>
+        <a class="github-button" href="https://github.com/shakib04/jpql-to-sql-converter" data-color-scheme="no-preference: light; light: light; dark: dark;" data-size="large" data-show-count="true" aria-label="Star shakib04/jpql-to-sql-converter on GitHub">Star</a>
+    </div>
 </div>
 
-<div class="mb-3">
-    <label for="inputText" class="form-label" id="inputLabel">Enter JPQL Query:</label>
-    <textarea id="inputText" class="form-control" rows="5" placeholder="Enter JPQL query here..."></textarea>
-</div>
-
-<button class="btn btn-primary w-100 mb-3" onclick="convertText()">Convert</button>
-
-<div class="mb-3">
-    <label class="form-label" id="outputLabel">Converted SQL Query:</label>
-    <div id="output" class="form-control bg-light border" style="min-height: 50px; white-space: pre-wrap;"></div>
-</div>
-
-<button class="btn btn-success w-100" onclick="copyToClipboard()">Copy to Clipboard</button>
-
-<!-- Place this tag where you want the button to render. -->
-<a class="github-button" href="https://github.com/shakib04/jpql-to-sql-converter" data-color-scheme="no-preference: light; light: light; dark: dark;" data-size="large" aria-label="Star shakib04/jpql-to-sql-converter on GitHub">Star</a>
-
-<!-- Place this tag in your head or just before your close body tag. -->
 <script async defer src="https://buttons.github.io/buttons.js"></script>
 
 <script>
-    let isJpqlToSql = true; // Default mode
+    let isJpqlToSql = true;
 
     function toggleMode() {
         isJpqlToSql = !isJpqlToSql;
 
-        // Update UI elements
         const fromLabel = document.getElementById('fromLabel');
         const toLabel = document.getElementById('toLabel');
         const inputLabel = document.getElementById('inputLabel');
@@ -72,38 +390,34 @@
         if (isJpqlToSql) {
             fromLabel.textContent = 'JPQL';
             toLabel.textContent = 'SQL';
-            inputLabel.textContent = 'Enter JPQL Query:';
-            outputLabel.textContent = 'Converted SQL Query:';
-            inputText.placeholder = 'Enter JPQL query here...';
+            inputLabel.innerHTML = '<i class="bi bi-code-square"></i> Enter JPQL Query:';
+            outputLabel.innerHTML = '<i class="bi bi-file-code"></i> Converted SQL Query:';
+            inputText.placeholder = 'Enter your JPQL query here...';
             arrowIcon.classList.remove('reversed');
         } else {
             fromLabel.textContent = 'SQL';
             toLabel.textContent = 'JPQL';
-            inputLabel.textContent = 'Enter SQL Query:';
-            outputLabel.textContent = 'Converted JPQL Query:';
-            inputText.placeholder = 'Enter SQL query here...';
+            inputLabel.innerHTML = '<i class="bi bi-code-square"></i> Enter SQL Query:';
+            outputLabel.innerHTML = '<i class="bi bi-file-code"></i> Converted JPQL Query:';
+            inputText.placeholder = 'Enter your SQL query here...';
             arrowIcon.classList.add('reversed');
         }
 
-        // Clear previous conversion
-        document.getElementById('output').innerText = '';
+        document.getElementById('output').textContent = '';
     }
 
     function toSnakeCase(query) {
-        // Preserve named parameters first
         let params = {};
         query = query.replace(/:\w+/g, (match) => {
             let key = `__param${Object.keys(params).length}__`;
-            params[key] = match; // Store the parameter
-            return key; // Temporarily replace it
+            params[key] = match;
+            return key;
         });
 
-        // Convert PascalCase and camelCase to snake_case (excluding replaced parameters)
         query = query.replace(/\b([a-zA-Z_][a-z0-9]*)([A-Z][a-z0-9]*)+\b/g, (match) => {
             return match.replace(/([a-z0-9])([A-Z])/g, '$1_$2').toLowerCase();
         });
 
-        // Restore named parameters
         Object.keys(params).forEach(key => {
             query = query.replace(key, params[key]);
         });
@@ -112,34 +426,29 @@
     }
 
     function toCamelCase(query) {
-        // Preserve named parameters first
         let params = {};
         query = query.replace(/:\w+/g, (match) => {
             let key = `__param${Object.keys(params).length}__`;
-            params[key] = match; // Store the parameter
-            return key; // Temporarily replace it
+            params[key] = match;
+            return key;
         });
 
-        // Convert snake_case to camelCase
         query = query.replace(/\b[a-z]+(_[a-z]+)+\b/g, (match) => {
-            // Check if this is a SQL keyword that should stay uppercase
             const upperMatch = match.toUpperCase();
             const sqlKeywords = ['INNER_JOIN', 'LEFT_JOIN', 'RIGHT_JOIN', 'OUTER_JOIN', 'CROSS_JOIN',
                 'GROUP_BY', 'ORDER_BY', 'UNION_ALL', 'IS_NULL', 'IS_NOT_NULL',
                 'NOT_NULL', 'PRIMARY_KEY', 'FOREIGN_KEY'];
 
             if (sqlKeywords.includes(upperMatch)) {
-                return match; // Keep SQL keywords as is
+                return match;
             }
 
-            // Convert to camelCase
             return match.split('_').map((part, index) => {
                 if (index === 0) return part.toLowerCase();
                 return part.charAt(0).toUpperCase() + part.slice(1).toLowerCase();
             }).join('');
         });
 
-        // Restore named parameters
         Object.keys(params).forEach(key => {
             query = query.replace(key, params[key]);
         });
@@ -149,6 +458,11 @@
 
     function convertText() {
         let inputText = document.getElementById("inputText").value;
+        if (!inputText.trim()) {
+            showAlert('Please enter a query to convert', 'warning');
+            return;
+        }
+
         let convertedText;
 
         if (isJpqlToSql) {
@@ -157,20 +471,57 @@
             convertedText = toCamelCase(inputText);
         }
 
-        document.getElementById("output").innerText = convertedText;
+        document.getElementById("output").textContent = convertedText;
     }
 
     function copyToClipboard() {
-        let outputText = document.getElementById("output").innerText;
+        let outputText = document.getElementById("output").textContent;
+        if (!outputText.trim()) {
+            showAlert('Nothing to copy! Please convert a query first.', 'warning');
+            return;
+        }
+
         navigator.clipboard.writeText(outputText).then(() => {
-            alert("Copied to clipboard!");
+            showAlert('Copied to clipboard!', 'success');
         }).catch(err => {
             console.error("Error copying text: ", err);
+            showAlert('Failed to copy. Please try again.', 'danger');
         });
     }
+
+    function convertAndCopy() {
+        convertText();
+        setTimeout(() => {
+            let outputText = document.getElementById("output").textContent;
+            if (outputText.trim()) {
+                copyToClipboard();
+            }
+        }, 100);
+    }
+
+    function showAlert(message, type) {
+        const alertDiv = document.createElement('div');
+        alertDiv.className = `alert alert-${type} alert-dismissible fade show alert-success`;
+        alertDiv.innerHTML = `
+                <i class="bi bi-${type === 'success' ? 'check-circle' : 'exclamation-triangle'}"></i>
+                ${message}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            `;
+        document.body.appendChild(alertDiv);
+
+        setTimeout(() => {
+            alertDiv.remove();
+        }, 3000);
+    }
+
+    // Add keyboard shortcut for convert (Ctrl/Cmd + Enter)
+    document.getElementById('inputText').addEventListener('keydown', function(e) {
+        if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
+            convertText();
+        }
+    });
 </script>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-
 </body>
 </html>
