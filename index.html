@@ -4,22 +4,46 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="google-site-verification" content="emr9eD0HPV2Svuem8oSjeRF319sTuF-WLPR4Lfdxopw" />
-    <title>JPQL to SQL Converter</title>
+    <title>JPQL ⇄ SQL Converter</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        .mode-toggle {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+        .arrow-icon {
+            font-size: 24px;
+            transition: transform 0.3s ease;
+        }
+        .arrow-icon.reversed {
+            transform: rotate(180deg);
+        }
+    </style>
 </head>
 <body class="container mt-4">
 
-<h2 class="text-center mb-3">JPQL to SQL Converter</h2>
+<h2 class="text-center mb-3">JPQL ⇄ SQL Converter</h2>
+
+<div class="mode-toggle">
+    <span id="fromLabel" class="h5 mb-0">JPQL</span>
+    <button class="btn btn-outline-primary btn-sm" onclick="toggleMode()">
+        <span class="arrow-icon" id="arrowIcon">→</span>
+    </button>
+    <span id="toLabel" class="h5 mb-0">SQL</span>
+</div>
 
 <div class="mb-3">
-    <label for="inputText" class="form-label">Enter JPQL Query:</label>
+    <label for="inputText" class="form-label" id="inputLabel">Enter JPQL Query:</label>
     <textarea id="inputText" class="form-control" rows="5" placeholder="Enter JPQL query here..."></textarea>
 </div>
 
 <button class="btn btn-primary w-100 mb-3" onclick="convertText()">Convert</button>
 
 <div class="mb-3">
-    <label class="form-label">Converted SQL Query:</label>
+    <label class="form-label" id="outputLabel">Converted SQL Query:</label>
     <div id="output" class="form-control bg-light border" style="min-height: 50px; white-space: pre-wrap;"></div>
 </div>
 
@@ -29,9 +53,42 @@
 <a class="github-button" href="https://github.com/shakib04/jpql-to-sql-converter" data-color-scheme="no-preference: light; light: light; dark: dark;" data-size="large" aria-label="Star shakib04/jpql-to-sql-converter on GitHub">Star</a>
 
 <!-- Place this tag in your head or just before your close body tag. -->
-<script async defer src="https://buttons.github.io/buttons.js"></script>    
+<script async defer src="https://buttons.github.io/buttons.js"></script>
 
 <script>
+    let isJpqlToSql = true; // Default mode
+
+    function toggleMode() {
+        isJpqlToSql = !isJpqlToSql;
+
+        // Update UI elements
+        const fromLabel = document.getElementById('fromLabel');
+        const toLabel = document.getElementById('toLabel');
+        const inputLabel = document.getElementById('inputLabel');
+        const outputLabel = document.getElementById('outputLabel');
+        const inputText = document.getElementById('inputText');
+        const arrowIcon = document.getElementById('arrowIcon');
+
+        if (isJpqlToSql) {
+            fromLabel.textContent = 'JPQL';
+            toLabel.textContent = 'SQL';
+            inputLabel.textContent = 'Enter JPQL Query:';
+            outputLabel.textContent = 'Converted SQL Query:';
+            inputText.placeholder = 'Enter JPQL query here...';
+            arrowIcon.classList.remove('reversed');
+        } else {
+            fromLabel.textContent = 'SQL';
+            toLabel.textContent = 'JPQL';
+            inputLabel.textContent = 'Enter SQL Query:';
+            outputLabel.textContent = 'Converted JPQL Query:';
+            inputText.placeholder = 'Enter SQL query here...';
+            arrowIcon.classList.add('reversed');
+        }
+
+        // Clear previous conversion
+        document.getElementById('output').innerText = '';
+    }
+
     function toSnakeCase(query) {
         // Preserve named parameters first
         let params = {};
@@ -54,9 +111,52 @@
         return query;
     }
 
+    function toCamelCase(query) {
+        // Preserve named parameters first
+        let params = {};
+        query = query.replace(/:\w+/g, (match) => {
+            let key = `__param${Object.keys(params).length}__`;
+            params[key] = match; // Store the parameter
+            return key; // Temporarily replace it
+        });
+
+        // Convert snake_case to camelCase
+        query = query.replace(/\b[a-z]+(_[a-z]+)+\b/g, (match) => {
+            // Check if this is a SQL keyword that should stay uppercase
+            const upperMatch = match.toUpperCase();
+            const sqlKeywords = ['INNER_JOIN', 'LEFT_JOIN', 'RIGHT_JOIN', 'OUTER_JOIN', 'CROSS_JOIN',
+                'GROUP_BY', 'ORDER_BY', 'UNION_ALL', 'IS_NULL', 'IS_NOT_NULL',
+                'NOT_NULL', 'PRIMARY_KEY', 'FOREIGN_KEY'];
+
+            if (sqlKeywords.includes(upperMatch)) {
+                return match; // Keep SQL keywords as is
+            }
+
+            // Convert to camelCase
+            return match.split('_').map((part, index) => {
+                if (index === 0) return part.toLowerCase();
+                return part.charAt(0).toUpperCase() + part.slice(1).toLowerCase();
+            }).join('');
+        });
+
+        // Restore named parameters
+        Object.keys(params).forEach(key => {
+            query = query.replace(key, params[key]);
+        });
+
+        return query;
+    }
+
     function convertText() {
         let inputText = document.getElementById("inputText").value;
-        let convertedText = toSnakeCase(inputText);
+        let convertedText;
+
+        if (isJpqlToSql) {
+            convertedText = toSnakeCase(inputText);
+        } else {
+            convertedText = toCamelCase(inputText);
+        }
+
         document.getElementById("output").innerText = convertedText;
     }
 
