@@ -14,6 +14,12 @@
         window.dataLayer = window.dataLayer || [];
         function gtag(){dataLayer.push(arguments);}
         gtag('js', new Date());
+
+        // Start with analytics denied by default
+        gtag('consent', 'default', {
+            'analytics_storage': 'denied'
+        });
+
         gtag('config', 'G-110165017', {
             anonymize_ip: true,
             cookie_flags: 'SameSite=None;Secure'
@@ -272,6 +278,78 @@
             color: var(--text-secondary);
             margin-bottom: 2rem;
         }
+
+        .analytics-notice {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: var(--text-primary);
+            color: white;
+            padding: 1rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 1rem;
+            box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.1);
+            z-index: 1000;
+            animation: slideUp 0.3s ease-out;
+        }
+
+        .analytics-notice.hidden {
+            display: none;
+        }
+
+        .analytics-notice-text {
+            flex: 1;
+            font-size: 14px;
+            line-height: 1.5;
+        }
+
+        .analytics-notice-buttons {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .analytics-notice button {
+            padding: 0.5rem 1rem;
+            border: none;
+            border-radius: 4px;
+            font-size: 14px;
+            cursor: pointer;
+            transition: opacity 0.2s;
+        }
+
+        .analytics-notice button:hover {
+            opacity: 0.9;
+        }
+
+        .btn-accept {
+            background: var(--primary-color);
+            color: white;
+        }
+
+        .btn-info {
+            background: transparent;
+            color: white;
+            text-decoration: underline;
+        }
+
+        @keyframes slideUp {
+            from {
+                transform: translateY(100%);
+            }
+            to {
+                transform: translateY(0);
+            }
+        }
+
+        @media (max-width: 768px) {
+            .analytics-notice {
+                flex-direction: column;
+                text-align: center;
+            }
+        }
     </style>
 </head>
 <body>
@@ -388,13 +466,67 @@
 <script async defer src="https://buttons.github.io/buttons.js"></script>
 
 <script>
+    // Check for analytics consent
+    function hasAnalyticsConsent() {
+        return localStorage.getItem('analytics-consent') === 'true';
+    }
+
+    // Initialize analytics only if consent given
+    function initializeAnalytics() {
+        if (hasAnalyticsConsent() && typeof gtag !== 'undefined') {
+            gtag('consent', 'update', {
+                'analytics_storage': 'granted'
+            });
+        }
+    }
+
+    // Show analytics notice if not yet decided
+    function showAnalyticsNotice() {
+        if (localStorage.getItem('analytics-consent') === null) {
+            const notice = document.createElement('div');
+            notice.className = 'analytics-notice';
+            notice.innerHTML = `
+                    <div class="analytics-notice-text">
+                        We use anonymous analytics to improve this tool. No personal data is collected.
+                        <a href="#" class="btn-info" onclick="showPrivacyInfo(event)">Learn more</a>
+                    </div>
+                    <div class="analytics-notice-buttons">
+                        <button class="btn-accept" onclick="acceptAnalytics()">Got it</button>
+                    </div>
+                `;
+            document.body.appendChild(notice);
+        }
+    }
+
+    function acceptAnalytics() {
+        localStorage.setItem('analytics-consent', 'true');
+        document.querySelector('.analytics-notice').classList.add('hidden');
+        initializeAnalytics();
+    }
+
+    function showPrivacyInfo(e) {
+        e.preventDefault();
+        alert('We use Google Analytics 4 to collect anonymous usage data such as:\n\n' +
+            '• Number of conversions performed\n' +
+            '• Types of conversions (JPQL to SQL or vice versa)\n' +
+            '• Session duration\n' +
+            '• No personal information or query content is stored\n\n' +
+            'This helps us improve the tool for everyone.');
+    }
+
+    // Initialize on page load
+    window.addEventListener('load', function() {
+        initializeAnalytics();
+        setTimeout(showAnalyticsNotice, 1000);
+    });
+
     let isJpqlToSql = true;
     let sessionStartTime = Date.now();
     let conversionCount = 0;
 
     // Analytics helper function
     function trackEvent(eventName, parameters = {}) {
-        if (typeof gtag !== 'undefined') {
+        if (typeof gtag !== 'undefined' && hasAnalyticsConsent()) {
             gtag('event', eventName, {
                 ...parameters,
                 session_duration: Math.floor((Date.now() - sessionStartTime) / 1000)
