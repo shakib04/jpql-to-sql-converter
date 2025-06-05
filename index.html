@@ -13,7 +13,7 @@
     <meta name="keywords" content="JPQL to SQL, SQL to JPQL, JPQL converter, SQL converter, JPA query converter, JPQL syntax, SQL syntax converter">
 
     <!-- Google Analytics -->
-    <script async src="https://www.googletagmanager.com/gtag/js?id=G-8BHWXL7P24"></script>
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-XXXXXXXXXX"></script>
     <script>
         window.dataLayer = window.dataLayer || [];
         function gtag(){dataLayer.push(arguments);}
@@ -24,7 +24,7 @@
             'analytics_storage': 'denied'
         });
 
-        gtag('config', 'G-8BHWXL7P24', {
+        gtag('config', 'G-XXXXXXXXXX', {
             anonymize_ip: true,
             cookie_flags: 'SameSite=None;Secure'
         });
@@ -32,6 +32,10 @@
 
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+
+    <!-- Firebase SDKs -->
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
     <style>
         :root {
             --primary-color: #2563eb;
@@ -470,6 +474,62 @@
 <script async defer src="https://buttons.github.io/buttons.js"></script>
 
 <script>
+    // Firebase Configuration - REPLACE WITH YOUR CONFIG
+    const firebaseConfig = {
+        apiKey: "AIzaSyDaMLH-TqyhdRm2orKVSEr_C3TCXOpbmjU",
+        authDomain: "jpql-sql-converter.firebaseapp.com",
+        projectId: "jpql-sql-converter",
+        storageBucket: "jpql-sql-converter.firebasestorage.app",
+        messagingSenderId: "505562665683",
+        appId: "1:505562665683:web:282d51ce6963b21716fa26",
+        measurementId: "G-NMDFES1JRD"
+    };
+
+    // Initialize Firebase
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.firestore();
+
+    // Generate or get session ID
+    function getSessionId() {
+        let sessionId = sessionStorage.getItem('sessionId');
+        if (!sessionId) {
+            sessionId = 'session_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+            sessionStorage.setItem('sessionId', sessionId);
+        }
+        return sessionId;
+    }
+
+    // Collect user query to Firebase
+    async function collectUserQuery(input, output) {
+        if (!hasAnalyticsConsent()) return;
+
+        try {
+            await db.collection('queries').add({
+                input: input,
+                output: output,
+                conversionType: isJpqlToSql ? 'jpql_to_sql' : 'sql_to_jpql',
+                timestamp: firebase.firestore.FieldValue.serverTimestamp(),
+                sessionId: getSessionId(),
+                metadata: {
+                    inputLength: input.length,
+                    outputLength: output.length,
+                    hasJoins: input.toUpperCase().includes('JOIN'),
+                    hasParameters: input.includes(':'),
+                    hasWhere: input.toUpperCase().includes('WHERE'),
+                    hasGroupBy: input.toUpperCase().includes('GROUP BY'),
+                    hasOrderBy: input.toUpperCase().includes('ORDER BY')
+                },
+                userAgent: navigator.userAgent,
+                screenSize: `${window.screen.width}x${window.screen.height}`,
+                language: navigator.language
+            });
+
+            console.log('Query collected successfully');
+        } catch (error) {
+            console.error('Error collecting query:', error);
+        }
+    }
+
     // Check for analytics consent
     function hasAnalyticsConsent() {
         return localStorage.getItem('analytics-consent') === 'true';
@@ -491,7 +551,7 @@
             notice.className = 'analytics-notice';
             notice.innerHTML = `
                     <div class="analytics-notice-text">
-                        We use anonymous analytics to improve this tool. No personal data is collected.
+                        We use anonymous analytics and collect query examples to improve this tool. No personal data is stored.
                         <a href="#" class="btn-info" onclick="showPrivacyInfo(event)">Learn more</a>
                     </div>
                     <div class="analytics-notice-buttons">
@@ -510,12 +570,16 @@
 
     function showPrivacyInfo(e) {
         e.preventDefault();
-        alert('We use Google Analytics 4 to collect anonymous usage data such as:\n\n' +
-            '• Number of conversions performed\n' +
-            '• Types of conversions (JPQL to SQL or vice versa)\n' +
-            '• Session duration\n' +
-            '• No personal information or query content is stored\n\n' +
-            'This helps us improve the tool for everyone.');
+        alert('We collect the following data to improve our tool:\n\n' +
+            '• Query examples (input and output)\n' +
+            '• Conversion types and patterns\n' +
+            '• Anonymous usage statistics\n' +
+            '• Session information (no personal data)\n\n' +
+            'Your queries are stored securely in Firebase and help us:\n' +
+            '• Improve conversion accuracy\n' +
+            '• Add support for more query patterns\n' +
+            '• Fix bugs and edge cases\n\n' +
+            'We never store personal information or share your data.');
     }
 
     // Initialize on page load
@@ -658,7 +722,31 @@
             has_joins: inputText.toUpperCase().includes('JOIN'),
             conversion_number: conversionCount
         });
+
+        // Collect user queries (if consent given)
+        if (hasAnalyticsConsent()) {
+            collectUserQuery(inputText, convertedText);
+        }
     }
+
+    // Query collection function
+    // async function collectUserQuery(input, output) {
+    //     try {
+    //         // Option 1: Send to your webhook
+    //         await fetch('https://hooks.zapier.com/hooks/catch/YOUR_WEBHOOK_ID/', {
+    //             method: 'POST',
+    //             body: JSON.stringify({
+    //                 input: input,
+    //                 output: output,
+    //                 type: isJpqlToSql ? 'jpql_to_sql' : 'sql_to_jpql',
+    //                 timestamp: new Date().toISOString(),
+    //                 sessionId: sessionStorage.getItem('sessionId') || 'anonymous'
+    //             })
+    //         });
+    //     } catch (error) {
+    //         console.error('Failed to collect query:', error);
+    //     }
+    // }
 
     function copyToClipboard() {
         let outputText = document.getElementById("output").textContent;
