@@ -197,6 +197,16 @@ function toCamelCase(query) {
         return key;
     });
 
+    // First, handle entity names after FROM and JOIN keywords
+    query = query.replace(/\b(FROM|JOIN)\s+([a-z]+(?:_[a-z]+)*)\b/gi, (match, keyword, entityName) => {
+        // Convert entity name to PascalCase
+        const pascalCase = entityName.split('_').map(part => {
+            return part.charAt(0).toUpperCase() + part.slice(1).toLowerCase();
+        }).join('');
+        return `${keyword} ${pascalCase}`;
+    });
+
+    // Then handle remaining snake_case words (fields, etc.)
     query = query.replace(/\b[a-z]+(_[a-z]+)+\b/g, (match) => {
         const upperMatch = match.toUpperCase();
         const sqlKeywords = ['INNER_JOIN', 'LEFT_JOIN', 'RIGHT_JOIN', 'OUTER_JOIN', 'CROSS_JOIN',
@@ -207,6 +217,7 @@ function toCamelCase(query) {
             return match;
         }
 
+        // Regular camelCase for fields
         return match.split('_').map((part, index) => {
             if (index === 0) return part.toLowerCase();
             return part.charAt(0).toUpperCase() + part.slice(1).toLowerCase();
