@@ -24,37 +24,6 @@ function getSessionId() {
     return sessionId;
 }
 
-// Collect user query to Firebase
-async function collectUserQuery(input, output) {
-    if (!hasAnalyticsConsent()) return;
-
-    try {
-        await db.collection('queries').add({
-            input: input,
-            output: output,
-            conversionType: isJpqlToSql ? 'jpql_to_sql' : 'sql_to_jpql',
-            timestamp: firebase.firestore.FieldValue.serverTimestamp(),
-            sessionId: getSessionId(),
-            metadata: {
-                inputLength: input.length,
-                outputLength: output.length,
-                hasJoins: input.toUpperCase().includes('JOIN'),
-                hasParameters: input.includes(':'),
-                hasWhere: input.toUpperCase().includes('WHERE'),
-                hasGroupBy: input.toUpperCase().includes('GROUP BY'),
-                hasOrderBy: input.toUpperCase().includes('ORDER BY')
-            },
-            userAgent: navigator.userAgent,
-            screenSize: `${window.screen.width}x${window.screen.height}`,
-            language: navigator.language
-        });
-
-        console.log('Query collected successfully');
-    } catch (error) {
-        console.error('Error collecting query:', error);
-    }
-}
-
 // Check for analytics consent
 function hasAnalyticsConsent() {
     return localStorage.getItem('analytics-consent') === 'true';
@@ -383,7 +352,7 @@ firebase.auth().onAuthStateChanged((user) => {
     }
 });
 
-// Update collectUserQuery to include user info
+// Collect user query to Firebase
 async function collectUserQuery(input, output) {
     if (!hasAnalyticsConsent()) return;
 
