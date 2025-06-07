@@ -330,3 +330,166 @@ document.getElementById('inputText').addEventListener('keydown', function(e) {
         convertText();
     }
 });
+
+// Google Sign In
+async function signInWithGoogle() {
+    const provider = new firebase.auth.GoogleAuthProvider();
+
+    try {
+        const result = await firebase.auth().signInWithPopup(provider);
+        const user = result.user;
+
+        // Save user info to Firestore
+        await db.collection('users').doc(user.uid).set({
+            uid: user.uid,
+            email: user.email,
+            displayName: user.displayName,
+            photoURL: user.photoURL,
+            lastLogin: firebase.firestore.FieldValue.serverTimestamp(),
+            createdAt: firebase.firestore.FieldValue.serverTimestamp()
+        }, { merge: true });
+
+        showAlert(`Welcome, ${user.displayName}!`, 'success');
+    } catch (error) {
+        console.error('Sign in error:', error);
+        showAlert('Sign in failed. Please try again.', 'danger');
+    }
+}
+
+// Sign Out
+async function signOut() {
+    try {
+        await firebase.auth().signOut();
+        showAlert('Signed out successfully', 'success');
+    } catch (error) {
+        console.error('Sign out error:', error);
+        showAlert('Sign out failed', 'danger');
+    }
+}
+
+// Auth State Observer
+firebase.auth().onAuthStateChanged((user) => {
+    if (user) {
+        // User is signed in
+        document.getElementById('authContainer').style.display = 'none';
+        document.getElementById('userContainer').style.display = 'flex';
+        document.getElementById('userPhoto').src = user.photoURL || 'https://ui-avatars.com/api/?name=' + encodeURIComponent(user.displayName);
+        document.getElementById('userName').textContent = user.displayName;
+        document.getElementById('userEmail').textContent = user.email;
+    } else {
+        // User is signed out
+        document.getElementById('authContainer').style.display = 'block';
+        document.getElementById('userContainer').style.display = 'none';
+    }
+});
+
+// Update collectUserQuery to include user info
+async function collectUserQuery(input, output) {
+    if (!hasAnalyticsConsent()) return;
+
+    const user = firebase.auth().currentUser;
+
+    try {
+        await db.collection('queries').add({
+            input: input,
+            output: output,
+            conversionType: isJpqlToSql ? 'jpql_to_sql' : 'sql_to_jpql',
+            timestamp: firebase.firestore.FieldValue.serverTimestamp(),
+            sessionId: getSessionId(),
+            // User specific fields
+            userId: user ? user.uid : null,
+            userEmail: user ? user.email : null,
+            userName: user ? user.displayName : null,
+            metadata: {
+                inputLength: input.length,
+                outputLength: output.length,
+                hasJoins: input.toUpperCase().includes('JOIN'),
+                hasParameters: input.includes(':'),
+                hasWhere: input.toUpperCase().includes('WHERE'),
+                hasGroupBy: input.toUpperCase().includes('GROUP BY'),
+                hasOrderBy: input.toUpperCase().includes('ORDER BY')
+            },
+            userAgent: navigator.userAgent,
+            screenSize: `${window.screen.width}x${window.screen.height}`,
+            language: navigator.language
+        });
+
+        console.log('Query collected successfully');
+    } catch (error) {
+        console.error('Error collecting query:', error);
+    }
+}
+
+// Show Query History
+async function showQueryHistory() {
+    const user = firebase.auth().currentUser;
+    if (!user) {
+        showAlert('Please sign in to view history', 'warning');
+        return;
+    }
+
+    const modal = new bootstrap.Modal(document.getElementById('historyModal'));
+    modal.show();
+
+    try {
+        const snapshot = await db.collection('queries')
+            .where('userId', '==', user.uid)
+            .orderBy('timestamp', 'desc')
+            .limit(20)
+            .get();
+
+        let historyHTML = '';
+
+        if (snapshot.empty) {
+            historyHTML = '<p class="text-center text-secondary">No queries found. Start converting!</p>';
+        } else {
+            snapshot.forEach(doc => {
+                const data = doc.data();
+                const date = data.timestamp ? data.timestamp.toDate().toLocaleString() : 'Just now';
+
+                historyHTML += `
+                    <div class="query-history-item">
+                        <div class="query-history-meta">
+                            <span>${date}</span>
+                            <span class="query-history-type">${data.conversionType.replace('_', ' → ').toUpperCase()}</span>
+                        </div>
+                        <div class="query-code">Input: ${escapeHtml(data.input)}</div>
+                        <div class="query-code">Output: ${escapeHtml(data.output)}</div>
+                        <button class="btn btn-sm btn-outline-primary mt-2" onclick="reuseQuery('${escapeHtml(data.input)}', ${data.conversionType === 'jpql_to_sql'})">
+                            <i class="bi bi-arrow-repeat"></i> Use Again
+                        </button>
+                    </div>
+                `;
+            });
+        }
+
+        document.getElementById('historyContent').innerHTML = historyHTML;
+    } catch (error) {
+        console.error('Error loading history:', error);
+        document.getElementById('historyContent').innerHTML = '<p class="text-danger">Error loading history</p>';
+    }
+}
+
+// Reuse query from history
+function reuseQuery(query, isJpqlToSqlConversion) {
+    const modal = bootstrap.Modal.getInstance(document.getElementById('historyModal'));
+    modal.hide();
+
+    // Set the mode
+    if (isJpqlToSql !== isJpqlToSqlConversion) {
+        toggleMode();
+    }
+
+    // Set the query
+    document.getElementById('inputText').value = query;
+
+    // Convert
+    convertText();
+}
+
+// Escape HTML
+function escapeHtml(text) {
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+}
